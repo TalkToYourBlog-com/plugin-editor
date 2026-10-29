@@ -4,7 +4,7 @@
  * Plugin Name:       TalkToYourBlog Plugin Editor
  * Plugin URI:        https://github.com/TalkToYourBlog-com/plugin-editor
  * Description:       Optional companion for TalkToYourBlog. Lets an AI app create and edit its own WordPress plugins through the WordPress Abilities API -- never an existing plugin. Not required for TalkToYourBlog to work.
- * Version:           0.3.0
+ * Version:           0.4.0
  * Requires at least: 6.9
  * Requires PHP:      7.4
  * Author:            Michal Futera
@@ -16,7 +16,7 @@
 
 defined('ABSPATH') || exit;
 
-define('TYB_PLUGIN_EDITOR_VERSION', '0.3.0');
+define('TYB_PLUGIN_EDITOR_VERSION', '0.4.0');
 define('TYB_PLUGIN_EDITOR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('TYB_PLUGIN_EDITOR_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('TYB_PLUGIN_EDITOR_INCLUDES_DIR', TYB_PLUGIN_EDITOR_PLUGIN_DIR . 'includes');

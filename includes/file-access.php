@@ -132,13 +132,53 @@ function tyb_plugin_editor_file_hash($absolute_path) {
 }
 
 /**
- * Creates a new "ai-*" plugin folder at the plugins root (or confirms one already exists). This
- * is the only way this plugin ever creates a top-level folder -- update-file and upload-image
- * only ever write inside one that already exists. Creating the folder does not install or
- * activate anything; WordPress only recognises it as a plugin once it has a PHP file with a
- * valid plugin header, and only runs it once a site admin activates it from the Plugins screen.
+ * The seed files for a brand new plugin: real, minimal, working code -- not just an empty
+ * folder. $slug is the folder/plugin name (e.g. "ai-my-widget"); $fn_prefix is the same string
+ * with hyphens turned to underscores, safe to use in PHP identifiers.
  *
- * @return array{path:string, url:string, created:bool}|WP_Error
+ * @return array<string, string> relative path (inside the plugin) => file content
+ */
+function tyb_plugin_editor_starter_plugin_files($slug, $fn_prefix) {
+    return [
+        "{$slug}.php" => <<<PHP
+<?php
+/*
+Plugin Name: {$slug}
+Version: 1.0.0
+*/
+
+defined('ABSPATH') || exit;
+
+require_once plugin_dir_path(__FILE__) . 'includes/hooks.php';
+
+PHP,
+        'includes/hooks.php' => <<<PHP
+<?php
+defined('ABSPATH') || exit;
+
+// Add this plugin's hooks here, e.g.:
+// add_action('init', '{$fn_prefix}_init');
+
+PHP,
+        'uninstall.php' => <<<PHP
+<?php
+defined('WP_UNINSTALL_PLUGIN') || exit;
+
+// Remove any options or data this plugin created, if any.
+
+PHP,
+    ];
+}
+
+/**
+ * Creates a new "ai-*" plugin (or confirms one with that name already exists): its own folder
+ * at the plugins root, seeded with a minimal but complete plugin skeleton -- a main file with a
+ * valid plugin header, an includes/hooks.php to build on, and an uninstall.php stub. This is the
+ * only way this plugin ever creates a top-level folder -- update-file and upload-image only
+ * ever write inside one that already exists. Creating it does not install or activate anything;
+ * WordPress only runs it once a site admin activates it from the Plugins screen.
+ *
+ * @return array{path:string, url:string, created:bool, files:string[]}|WP_Error
  */
 function tyb_plugin_editor_create_plugin_folder($name) {
     if (!tyb_plugin_editor_is_allowed_folder_name($name)) {
@@ -164,15 +204,56 @@ function tyb_plugin_editor_create_plugin_folder($name) {
         return new WP_Error('tyb_plugin_editor_mkdir_failed', __('The folder could not be created.', 'tyb-plugin-editor'));
     }
 
-    $index = $path . '/index.php';
-    if (!file_exists($index)) {
-        file_put_contents($index, "<?php\n// Silence is golden.\n");
+    $fn_prefix = str_replace('-', '_', $name);
+    $created_files = [];
+    foreach (tyb_plugin_editor_starter_plugin_files($name, $fn_prefix) as $relative => $content) {
+        $file_path = $path . '/' . $relative;
+        if (!file_exists($file_path)) {
+            wp_mkdir_p(dirname($file_path));
+            file_put_contents($file_path, $content);
+            $created_files[] = $relative;
+        }
     }
 
     return [
         'path' => $name,
         'url' => tyb_plugin_editor_plugins_dir_url() . '/' . $name,
         'created' => !$already_existed,
+        'files' => $created_files,
+    ];
+}
+
+/**
+ * Deletes a file inside an "ai-*" plugin folder, after snapshotting its current content first --
+ * writing that snapshot back to the same path with restore-revision re-creates the file, so a
+ * deletion is never permanent by accident.
+ *
+ * @return array{success:bool, revision_id:int}|WP_Error
+ */
+function tyb_plugin_editor_delete_file($relative_path) {
+    $resolved = tyb_plugin_editor_resolve_path($relative_path, true);
+    if (is_wp_error($resolved)) {
+        return $resolved;
+    }
+
+    $content = file_get_contents($resolved);
+    if ($content === false) {
+        return new WP_Error('tyb_plugin_editor_read_failed', __('The file could not be read.', 'tyb-plugin-editor'));
+    }
+
+    $relative = tyb_plugin_editor_relative_path($resolved);
+    $revision_id = tyb_plugin_editor_save_revision($relative, $content);
+    if (is_wp_error($revision_id)) {
+        return $revision_id;
+    }
+
+    if (!unlink($resolved)) {
+        return new WP_Error('tyb_plugin_editor_delete_failed', __('The file could not be deleted (check folder permissions).', 'tyb-plugin-editor'));
+    }
+
+    return [
+        'success' => true,
+        'revision_id' => $revision_id,
     ];
 }
 

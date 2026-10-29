@@ -25,7 +25,7 @@ add_action('wp_abilities_api_init', function () {
         'label' => __('Create a plugin folder', 'tyb-plugin-editor'),
         'description' => sprintf(
             /* translators: 1: required folder prefix, e.g. "ai-" */
-            __('Creates a new plugin folder under wp-content/plugins (or confirms one with that name already exists). The name must start with "%1$s" (e.g. "%1$smy-widget") -- call this once before writing the first file into a new plugin. Every other plugin folder, including this one, stays off limits. This only creates files; it never activates the plugin -- a site admin does that from the Plugins screen once it is ready.', 'tyb-plugin-editor'),
+            __('Creates a new plugin under wp-content/plugins -- its own folder seeded with a minimal but complete plugin skeleton (a main file with a valid plugin header, includes/hooks.php to build on, and uninstall.php) so there is real, working code to start from instead of an empty folder (or confirms one with that name already exists). The name must start with "%1$s" (e.g. "%1$smy-widget") -- call this once before writing the first file into a new plugin. Every other plugin folder, including this one, stays off limits. This only creates files; it never activates the plugin -- a site admin does that from the Plugins screen once it is ready.', 'tyb-plugin-editor'),
             TYB_PLUGIN_EDITOR_FOLDER_PREFIX
         ),
         'category' => 'tyb-plugin-editor',
@@ -43,6 +43,7 @@ add_action('wp_abilities_api_init', function () {
                 'path' => ['type' => 'string'],
                 'url' => ['type' => 'string'],
                 'created' => ['type' => 'boolean', 'description' => 'False when the folder already existed.'],
+                'files' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'The starter files written (empty if the plugin already existed).'],
             ],
         ],
         'execute_callback' => tyb_plugin_editor_logged_ability('create-plugin', function ($input) {
@@ -255,6 +256,46 @@ add_action('wp_abilities_api_init', function () {
         ],
         'execute_callback' => tyb_plugin_editor_logged_ability('upload-image', function ($input) {
             return tyb_plugin_editor_save_image($input['path'], $input['content_base64']);
+        }),
+        'permission_callback' => 'tyb_plugin_editor_can_edit_plugins',
+        'meta' => [
+            'annotations' => ['readonly' => false, 'destructive' => true, 'idempotent' => false],
+            'show_in_rest' => true,
+        ],
+    ]);
+
+    wp_register_ability('tyb-plugin-editor/delete-file', [
+        'label' => __('Delete a file', 'tyb-plugin-editor'),
+        'description' => __('Deletes a PHP, CSS, JS or image file inside one of this plugin\'s own "ai-*" plugin folders. The content is snapshotted first (for text files, via list-revisions / restore-revision), so a deletion can be undone by restoring that revision to the same path.', 'tyb-plugin-editor'),
+        'category' => 'tyb-plugin-editor',
+        'input_schema' => [
+            'type' => 'object',
+            'properties' => [
+                'path' => ['type' => 'string', 'minLength' => 1, 'description' => 'Path relative to the plugins folder, e.g. "ai-my-widget/unused.php".'],
+            ],
+            'required' => ['path'],
+            'additionalProperties' => false,
+        ],
+        'output_schema' => [
+            'type' => 'object',
+            'properties' => [
+                'success' => ['type' => 'boolean'],
+                'revision_id' => ['type' => ['integer', 'null'], 'description' => 'The id of the revision holding the content this call deleted, or null for an image (images are not revisioned).'],
+            ],
+        ],
+        'execute_callback' => tyb_plugin_editor_logged_ability('delete-file', function ($input) {
+            $extension = strtolower(pathinfo($input['path'], PATHINFO_EXTENSION));
+            if (in_array($extension, TYB_PLUGIN_EDITOR_ALLOWED_IMAGE_EXTENSIONS, true)) {
+                $resolved = tyb_plugin_editor_resolve_path($input['path'], true, TYB_PLUGIN_EDITOR_ALLOWED_IMAGE_EXTENSIONS);
+                if (is_wp_error($resolved)) {
+                    return $resolved;
+                }
+                if (!unlink($resolved)) {
+                    return new WP_Error('tyb_plugin_editor_delete_failed', __('The file could not be deleted (check folder permissions).', 'tyb-plugin-editor'));
+                }
+                return ['success' => true, 'revision_id' => null];
+            }
+            return tyb_plugin_editor_delete_file($input['path']);
         }),
         'permission_callback' => 'tyb_plugin_editor_can_edit_plugins',
         'meta' => [
