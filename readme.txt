@@ -4,7 +4,7 @@ Tags: abilities api, mcp, ai, plugin editor, developer tools
 Requires at least: 6.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 0.1.0
+Stable tag: 0.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -79,6 +79,9 @@ No data about the site or its users is sent anywhere by this plugin. Revisions s
 The full, human-readable source of this plugin is public: https://github.com/TalkToYourBlog-com/plugin-editor.
 
 == Changelog ==
+
+= 0.2.0 =
+* Added a built-in error log (TalkToYourBlog Plugin Editor in the admin menu), modelled on Anonymous Sales Plugin's: off by default, logs every ability call's success or failure with its path and, on failure, the error -- never file or image content. Includes a live viewer with level/search filtering, select, copy and clear.
 
 = 0.1.0 =
 * First version: create-plugin/list-plugins/list-files/get-file/create-or-edit-file/upload-image/list-revisions/restore-revision, all scoped to this plugin's own "ai-*" plugin folders.

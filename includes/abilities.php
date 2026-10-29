@@ -45,9 +45,9 @@ add_action('wp_abilities_api_init', function () {
                 'created' => ['type' => 'boolean', 'description' => 'False when the folder already existed.'],
             ],
         ],
-        'execute_callback' => function ($input) {
+        'execute_callback' => talktoyourblog_plugin_editor_logged_ability('create-plugin', function ($input) {
             return talktoyourblog_plugin_editor_create_plugin_folder($input['name']);
-        },
+        }),
         'permission_callback' => 'talktoyourblog_plugin_editor_can_edit_plugins',
         'meta' => [
             'annotations' => ['readonly' => false, 'destructive' => false, 'idempotent' => true],
@@ -65,10 +65,10 @@ add_action('wp_abilities_api_init', function () {
                 'plugins' => ['type' => 'array', 'items' => ['type' => 'string']],
             ],
         ],
-        'execute_callback' => function () {
+        'execute_callback' => talktoyourblog_plugin_editor_logged_ability('list-plugins', function () {
             $folders = talktoyourblog_plugin_editor_list_plugin_folders();
             return is_wp_error($folders) ? $folders : ['plugins' => $folders];
-        },
+        }),
         'permission_callback' => 'talktoyourblog_plugin_editor_can_edit_plugins',
         'meta' => [
             'annotations' => ['readonly' => true, 'destructive' => false, 'idempotent' => true],
@@ -96,10 +96,10 @@ add_action('wp_abilities_api_init', function () {
                 ],
             ],
         ],
-        'execute_callback' => function () {
+        'execute_callback' => talktoyourblog_plugin_editor_logged_ability('list-files', function () {
             $files = talktoyourblog_plugin_editor_list_files();
             return is_wp_error($files) ? $files : ['files' => $files];
-        },
+        }),
         'permission_callback' => 'talktoyourblog_plugin_editor_can_edit_plugins',
         'meta' => [
             'annotations' => ['readonly' => true, 'destructive' => false, 'idempotent' => true],
@@ -127,7 +127,7 @@ add_action('wp_abilities_api_init', function () {
                 'hash' => ['type' => 'string'],
             ],
         ],
-        'execute_callback' => function ($input) {
+        'execute_callback' => talktoyourblog_plugin_editor_logged_ability('get-file', function ($input) {
             $resolved = talktoyourblog_plugin_editor_resolve_path($input['path'], true);
             if (is_wp_error($resolved)) {
                 return $resolved;
@@ -141,7 +141,7 @@ add_action('wp_abilities_api_init', function () {
                 'content' => $content,
                 'hash' => hash('sha256', $content),
             ];
-        },
+        }),
         'permission_callback' => 'talktoyourblog_plugin_editor_can_edit_plugins',
         'meta' => [
             'annotations' => ['readonly' => true, 'destructive' => false, 'idempotent' => true],
@@ -176,7 +176,7 @@ add_action('wp_abilities_api_init', function () {
                 'revision_id' => ['type' => ['integer', 'null'], 'description' => 'The id of the revision that now holds the content this edit replaced, or null for a newly created file (nothing to snapshot).'],
             ],
         ],
-        'execute_callback' => function ($input) {
+        'execute_callback' => talktoyourblog_plugin_editor_logged_ability('update-file', function ($input) {
             $resolved = talktoyourblog_plugin_editor_resolve_path($input['path'], false);
             if (is_wp_error($resolved)) {
                 return $resolved;
@@ -220,7 +220,7 @@ add_action('wp_abilities_api_init', function () {
                 'hash' => hash('sha256', $input['content']),
                 'revision_id' => $revision_id,
             ];
-        },
+        }),
         'permission_callback' => 'talktoyourblog_plugin_editor_can_edit_plugins',
         'meta' => [
             'annotations' => ['readonly' => false, 'destructive' => true, 'idempotent' => false],
@@ -253,9 +253,9 @@ add_action('wp_abilities_api_init', function () {
                 'size_bytes' => ['type' => 'integer'],
             ],
         ],
-        'execute_callback' => function ($input) {
+        'execute_callback' => talktoyourblog_plugin_editor_logged_ability('upload-image', function ($input) {
             return talktoyourblog_plugin_editor_save_image($input['path'], $input['content_base64']);
-        },
+        }),
         'permission_callback' => 'talktoyourblog_plugin_editor_can_edit_plugins',
         'meta' => [
             'annotations' => ['readonly' => false, 'destructive' => true, 'idempotent' => false],
@@ -292,13 +292,13 @@ add_action('wp_abilities_api_init', function () {
                 ],
             ],
         ],
-        'execute_callback' => function ($input) {
+        'execute_callback' => talktoyourblog_plugin_editor_logged_ability('list-revisions', function ($input) {
             $resolved = talktoyourblog_plugin_editor_resolve_path($input['path'], true);
             if (is_wp_error($resolved)) {
                 return $resolved;
             }
             return ['revisions' => talktoyourblog_plugin_editor_list_revisions(talktoyourblog_plugin_editor_relative_path($resolved))];
-        },
+        }),
         'permission_callback' => 'talktoyourblog_plugin_editor_can_edit_plugins',
         'meta' => [
             'annotations' => ['readonly' => true, 'destructive' => false, 'idempotent' => true],
@@ -327,7 +327,7 @@ add_action('wp_abilities_api_init', function () {
                 'backup_revision_id' => ['type' => 'integer', 'description' => 'The id of the new revision created from the content this restore just replaced.'],
             ],
         ],
-        'execute_callback' => function ($input) {
+        'execute_callback' => talktoyourblog_plugin_editor_logged_ability('restore-revision', function ($input) {
             $revision = talktoyourblog_plugin_editor_get_revision($input['revision_id']);
             if (is_wp_error($revision)) {
                 return $revision;
@@ -365,7 +365,7 @@ add_action('wp_abilities_api_init', function () {
                 'hash' => hash('sha256', $revision['content']),
                 'backup_revision_id' => $backup_revision_id,
             ];
-        },
+        }),
         'permission_callback' => 'talktoyourblog_plugin_editor_can_edit_plugins',
         'meta' => [
             'annotations' => ['readonly' => false, 'destructive' => true, 'idempotent' => false],
