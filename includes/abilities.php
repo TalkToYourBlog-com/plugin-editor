@@ -290,7 +290,8 @@ add_action('wp_abilities_api_init', function () {
                 if (is_wp_error($resolved)) {
                     return $resolved;
                 }
-                if (!unlink($resolved)) {
+                wp_delete_file($resolved);
+                if (file_exists($resolved)) {
                     return new WP_Error('tyb_plugin_editor_delete_failed', __('The file could not be deleted (check folder permissions).', 'tyb-plugin-editor'));
                 }
                 return ['success' => true, 'revision_id' => null];

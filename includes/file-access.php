@@ -153,34 +153,25 @@ function tyb_plugin_editor_starter_plugin_files($slug, $fn_prefix) {
     $display_name = tyb_plugin_editor_display_name_from_slug($slug);
 
     return [
-        "{$slug}.php" => <<<PHP
-<?php
-/*
-Plugin Name: {$display_name}
-Description: Independent WordPress plugin created by an AI app through TalkToYourBlog (talktoyourblog.com).
-Version: 1.0.0
-*/
-
-defined('ABSPATH') || exit;
-
-require_once plugin_dir_path(__FILE__) . 'includes/hooks.php';
-
-PHP,
-        'includes/hooks.php' => <<<PHP
-<?php
-defined('ABSPATH') || exit;
-
-// Add this plugin's hooks here, e.g.:
-// add_action('init', '{$fn_prefix}_init');
-
-PHP,
-        'uninstall.php' => <<<PHP
-<?php
-defined('WP_UNINSTALL_PLUGIN') || exit;
-
-// Remove any options or data this plugin created, if any.
-
-PHP,
+        "{$slug}.php" => "<?php\n"
+            . "/*\n"
+            . "Plugin Name: {$display_name}\n"
+            . "Description: Independent WordPress plugin created by an AI app through TalkToYourBlog (talktoyourblog.com).\n"
+            . "Version: 1.0.0\n"
+            . "*/\n"
+            . "\n"
+            . "defined('ABSPATH') || exit;\n"
+            . "\n"
+            . "require_once plugin_dir_path(__FILE__) . 'includes/hooks.php';\n",
+        'includes/hooks.php' => "<?php\n"
+            . "defined('ABSPATH') || exit;\n"
+            . "\n"
+            . "// Add this plugin's hooks here, e.g.:\n"
+            . "// add_action('init', '{$fn_prefix}_init');\n",
+        'uninstall.php' => "<?php\n"
+            . "defined('WP_UNINSTALL_PLUGIN') || exit;\n"
+            . "\n"
+            . "// Remove any options or data this plugin created, if any.\n",
     ];
 }
 
@@ -261,7 +252,8 @@ function tyb_plugin_editor_delete_file($relative_path) {
         return $revision_id;
     }
 
-    if (!unlink($resolved)) {
+    wp_delete_file($resolved);
+    if (file_exists($resolved)) {
         return new WP_Error('tyb_plugin_editor_delete_failed', __('The file could not be deleted (check folder permissions).', 'tyb-plugin-editor'));
     }
 

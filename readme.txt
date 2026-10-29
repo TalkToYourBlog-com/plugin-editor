@@ -2,9 +2,9 @@
 Contributors: mjfutera
 Tags: abilities api, mcp, ai, plugin editor, developer tools
 Requires at least: 6.9
-Tested up to: 6.9
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,9 @@ No data about the site or its users is sent anywhere by this plugin. Revisions s
 The full, human-readable source of this plugin is public: https://github.com/TalkToYourBlog-com/plugin-editor.
 
 == Changelog ==
+
+= 1.0.1 =
+* Fixed every issue flagged by the official Plugin Check tool ahead of the WordPress.org submission: replaced `unlink()` with `wp_delete_file()`, replaced heredoc strings with plain PHP strings, switched a revision lookup from `meta_key`/`meta_value` to `meta_query`, and updated "Tested up to".
 
 = 1.0.0 =
 * create-plugin now turns the folder name into a readable Plugin Name (e.g. "ai-my-widget" becomes "AI My Widget") and adds a Description crediting TalkToYourBlog (talktoyourblog.com). Can be changed afterwards with update-file.
