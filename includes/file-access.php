@@ -6,18 +6,18 @@
 
 defined('ABSPATH') || exit;
 
-const TALKTOYOURBLOG_PLUGIN_EDITOR_ALLOWED_EXTENSIONS = ['php', 'css', 'js'];
-const TALKTOYOURBLOG_PLUGIN_EDITOR_ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-const TALKTOYOURBLOG_PLUGIN_EDITOR_FOLDER_PREFIX = 'ai-';
-const TALKTOYOURBLOG_PLUGIN_EDITOR_MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const TYB_PLUGIN_EDITOR_ALLOWED_EXTENSIONS = ['php', 'css', 'js'];
+const TYB_PLUGIN_EDITOR_ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+const TYB_PLUGIN_EDITOR_FOLDER_PREFIX = 'ai-';
+const TYB_PLUGIN_EDITOR_MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 /** The plugins directory every WordPress site already has (wp-content/plugins). */
-function talktoyourblog_plugin_editor_plugins_dir() {
+function tyb_plugin_editor_plugins_dir() {
     return wp_normalize_path(realpath(WP_PLUGIN_DIR));
 }
 
-/** Public URL matching talktoyourblog_plugin_editor_plugins_dir(). */
-function talktoyourblog_plugin_editor_plugins_dir_url() {
+/** Public URL matching tyb_plugin_editor_plugins_dir(). */
+function tyb_plugin_editor_plugins_dir_url() {
     return untrailingslashit(plugins_url());
 }
 
@@ -26,8 +26,8 @@ function talktoyourblog_plugin_editor_plugins_dir_url() {
  * other plugin folder (this one included) stays off limits. Lowercase letters, digits and
  * hyphens only, so a folder name is always a safe single path segment.
  */
-function talktoyourblog_plugin_editor_is_allowed_folder_name($name) {
-    $pattern = '/^' . preg_quote(TALKTOYOURBLOG_PLUGIN_EDITOR_FOLDER_PREFIX, '/') . '[a-z0-9-]+$/';
+function tyb_plugin_editor_is_allowed_folder_name($name) {
+    $pattern = '/^' . preg_quote(TYB_PLUGIN_EDITOR_FOLDER_PREFIX, '/') . '[a-z0-9-]+$/';
     return is_string($name) && preg_match($pattern, $name) === 1;
 }
 
@@ -42,43 +42,43 @@ function talktoyourblog_plugin_editor_is_allowed_folder_name($name) {
  * @param array|null $allowed_extensions  Defaults to the text extensions; pass the image list
  *                                        for image uploads.
  */
-function talktoyourblog_plugin_editor_resolve_path($relative_path, $must_exist = true, $allowed_extensions = null) {
-    $allowed_extensions = $allowed_extensions ?: TALKTOYOURBLOG_PLUGIN_EDITOR_ALLOWED_EXTENSIONS;
+function tyb_plugin_editor_resolve_path($relative_path, $must_exist = true, $allowed_extensions = null) {
+    $allowed_extensions = $allowed_extensions ?: TYB_PLUGIN_EDITOR_ALLOWED_EXTENSIONS;
 
     if (!is_string($relative_path) || $relative_path === '') {
-        return new WP_Error('talktoyourblog_plugin_editor_invalid_path', __('A file path is required.', 'talktoyourblog-plugin-editor'));
+        return new WP_Error('tyb_plugin_editor_invalid_path', __('A file path is required.', 'tyb-plugin-editor'));
     }
 
     $extension = strtolower(pathinfo($relative_path, PATHINFO_EXTENSION));
     if (!in_array($extension, $allowed_extensions, true)) {
         return new WP_Error(
-            'talktoyourblog_plugin_editor_extension_not_allowed',
+            'tyb_plugin_editor_extension_not_allowed',
             sprintf(
                 /* translators: %s: comma separated list of allowed file extensions */
-                __('Only these file types can be used here: %s.', 'talktoyourblog-plugin-editor'),
+                __('Only these file types can be used here: %s.', 'tyb-plugin-editor'),
                 implode(', ', $allowed_extensions)
             )
         );
     }
 
-    $plugins_dir = talktoyourblog_plugin_editor_plugins_dir();
+    $plugins_dir = tyb_plugin_editor_plugins_dir();
     if (!$plugins_dir) {
-        return new WP_Error('talktoyourblog_plugin_editor_no_plugins_dir', __('The plugins directory could not be found.', 'talktoyourblog-plugin-editor'));
+        return new WP_Error('tyb_plugin_editor_no_plugins_dir', __('The plugins directory could not be found.', 'tyb-plugin-editor'));
     }
 
     $normalized = ltrim(str_replace('\\', '/', $relative_path), '/');
     if ($normalized === '' || strpos($normalized, '..') !== false) {
-        return new WP_Error('talktoyourblog_plugin_editor_invalid_path', __('Invalid path.', 'talktoyourblog-plugin-editor'));
+        return new WP_Error('tyb_plugin_editor_invalid_path', __('Invalid path.', 'tyb-plugin-editor'));
     }
 
     $top = explode('/', $normalized)[0];
-    if (!talktoyourblog_plugin_editor_is_allowed_folder_name($top)) {
+    if (!tyb_plugin_editor_is_allowed_folder_name($top)) {
         return new WP_Error(
-            'talktoyourblog_plugin_editor_outside_scope',
+            'tyb_plugin_editor_outside_scope',
             sprintf(
                 /* translators: 1: required folder prefix, e.g. "ai-" */
-                __('This plugin can only touch plugin folders starting with "%1$s" (e.g. "%1$smy-widget/%1$smy-widget.php"). Call create-plugin first.', 'talktoyourblog-plugin-editor'),
-                TALKTOYOURBLOG_PLUGIN_EDITOR_FOLDER_PREFIX
+                __('This plugin can only touch plugin folders starting with "%1$s" (e.g. "%1$smy-widget/%1$smy-widget.php"). Call create-plugin first.', 'tyb-plugin-editor'),
+                TYB_PLUGIN_EDITOR_FOLDER_PREFIX
             )
         );
     }
@@ -88,7 +88,7 @@ function talktoyourblog_plugin_editor_resolve_path($relative_path, $must_exist =
     if ($must_exist) {
         $resolved = realpath($candidate);
         if ($resolved === false) {
-            return new WP_Error('talktoyourblog_plugin_editor_not_found', __('That file does not exist.', 'talktoyourblog-plugin-editor'));
+            return new WP_Error('tyb_plugin_editor_not_found', __('That file does not exist.', 'tyb-plugin-editor'));
         }
         $resolved = wp_normalize_path($resolved);
     } else {
@@ -96,11 +96,11 @@ function talktoyourblog_plugin_editor_resolve_path($relative_path, $must_exist =
         // already confirmed to sit inside an allowed "ai-*" plugin folder above.
         $parent_dir = dirname($candidate);
         if (!wp_mkdir_p($parent_dir)) {
-            return new WP_Error('talktoyourblog_plugin_editor_mkdir_failed', __('The containing folder could not be created.', 'talktoyourblog-plugin-editor'));
+            return new WP_Error('tyb_plugin_editor_mkdir_failed', __('The containing folder could not be created.', 'tyb-plugin-editor'));
         }
         $resolved_parent = realpath($parent_dir);
         if ($resolved_parent === false) {
-            return new WP_Error('talktoyourblog_plugin_editor_not_found', __('The containing folder could not be found.', 'talktoyourblog-plugin-editor'));
+            return new WP_Error('tyb_plugin_editor_not_found', __('The containing folder could not be found.', 'tyb-plugin-editor'));
         }
         $resolved = wp_normalize_path($resolved_parent) . '/' . basename($candidate);
     }
@@ -109,24 +109,24 @@ function talktoyourblog_plugin_editor_resolve_path($relative_path, $must_exist =
     // plugins dir and inside an allowed top-level folder, even though both were already checked
     // on the unresolved path above -- a symlink could otherwise smuggle the real location out.
     if (strpos($resolved, $plugins_dir . '/') !== 0) {
-        return new WP_Error('talktoyourblog_plugin_editor_outside_scope', __('That path is outside the plugins directory.', 'talktoyourblog-plugin-editor'));
+        return new WP_Error('tyb_plugin_editor_outside_scope', __('That path is outside the plugins directory.', 'tyb-plugin-editor'));
     }
     $resolved_top = explode('/', substr($resolved, strlen($plugins_dir) + 1))[0];
-    if (!talktoyourblog_plugin_editor_is_allowed_folder_name($resolved_top)) {
-        return new WP_Error('talktoyourblog_plugin_editor_outside_scope', __('That path resolves outside the AI-managed plugin folders.', 'talktoyourblog-plugin-editor'));
+    if (!tyb_plugin_editor_is_allowed_folder_name($resolved_top)) {
+        return new WP_Error('tyb_plugin_editor_outside_scope', __('That path resolves outside the AI-managed plugin folders.', 'tyb-plugin-editor'));
     }
 
     return $resolved;
 }
 
 /** Relative path (as the API speaks of it) from an already-resolved absolute path. */
-function talktoyourblog_plugin_editor_relative_path($absolute_path) {
-    $plugins_dir = talktoyourblog_plugin_editor_plugins_dir();
+function tyb_plugin_editor_relative_path($absolute_path) {
+    $plugins_dir = tyb_plugin_editor_plugins_dir();
     return ltrim(substr(wp_normalize_path($absolute_path), strlen($plugins_dir)), '/');
 }
 
 /** sha256 of a file's current content, used so a caller can detect it is editing stale content. */
-function talktoyourblog_plugin_editor_file_hash($absolute_path) {
+function tyb_plugin_editor_file_hash($absolute_path) {
     $contents = file_get_contents($absolute_path);
     return $contents === false ? null : hash('sha256', $contents);
 }
@@ -140,28 +140,28 @@ function talktoyourblog_plugin_editor_file_hash($absolute_path) {
  *
  * @return array{path:string, url:string, created:bool}|WP_Error
  */
-function talktoyourblog_plugin_editor_create_plugin_folder($name) {
-    if (!talktoyourblog_plugin_editor_is_allowed_folder_name($name)) {
+function tyb_plugin_editor_create_plugin_folder($name) {
+    if (!tyb_plugin_editor_is_allowed_folder_name($name)) {
         return new WP_Error(
-            'talktoyourblog_plugin_editor_invalid_folder_name',
+            'tyb_plugin_editor_invalid_folder_name',
             sprintf(
                 /* translators: 1: required folder prefix, e.g. "ai-" */
-                __('The folder name must start with "%1$s" and contain only lowercase letters, digits and hyphens, e.g. "%1$smy-widget".', 'talktoyourblog-plugin-editor'),
-                TALKTOYOURBLOG_PLUGIN_EDITOR_FOLDER_PREFIX
+                __('The folder name must start with "%1$s" and contain only lowercase letters, digits and hyphens, e.g. "%1$smy-widget".', 'tyb-plugin-editor'),
+                TYB_PLUGIN_EDITOR_FOLDER_PREFIX
             )
         );
     }
 
-    $plugins_dir = talktoyourblog_plugin_editor_plugins_dir();
+    $plugins_dir = tyb_plugin_editor_plugins_dir();
     if (!$plugins_dir) {
-        return new WP_Error('talktoyourblog_plugin_editor_no_plugins_dir', __('The plugins directory could not be found.', 'talktoyourblog-plugin-editor'));
+        return new WP_Error('tyb_plugin_editor_no_plugins_dir', __('The plugins directory could not be found.', 'tyb-plugin-editor'));
     }
 
     $path = $plugins_dir . '/' . $name;
     $already_existed = is_dir($path);
 
     if (!wp_mkdir_p($path)) {
-        return new WP_Error('talktoyourblog_plugin_editor_mkdir_failed', __('The folder could not be created.', 'talktoyourblog-plugin-editor'));
+        return new WP_Error('tyb_plugin_editor_mkdir_failed', __('The folder could not be created.', 'tyb-plugin-editor'));
     }
 
     $index = $path . '/index.php';
@@ -171,22 +171,22 @@ function talktoyourblog_plugin_editor_create_plugin_folder($name) {
 
     return [
         'path' => $name,
-        'url' => talktoyourblog_plugin_editor_plugins_dir_url() . '/' . $name,
+        'url' => tyb_plugin_editor_plugins_dir_url() . '/' . $name,
         'created' => !$already_existed,
     ];
 }
 
 /** Lists every "ai-*" plugin folder at the plugins root. */
-function talktoyourblog_plugin_editor_list_plugin_folders() {
-    $plugins_dir = talktoyourblog_plugin_editor_plugins_dir();
+function tyb_plugin_editor_list_plugin_folders() {
+    $plugins_dir = tyb_plugin_editor_plugins_dir();
     if (!$plugins_dir) {
-        return new WP_Error('talktoyourblog_plugin_editor_no_plugins_dir', __('The plugins directory could not be found.', 'talktoyourblog-plugin-editor'));
+        return new WP_Error('tyb_plugin_editor_no_plugins_dir', __('The plugins directory could not be found.', 'tyb-plugin-editor'));
     }
 
     $folders = [];
-    foreach (glob($plugins_dir . '/' . TALKTOYOURBLOG_PLUGIN_EDITOR_FOLDER_PREFIX . '*', GLOB_ONLYDIR) ?: [] as $folder) {
+    foreach (glob($plugins_dir . '/' . TYB_PLUGIN_EDITOR_FOLDER_PREFIX . '*', GLOB_ONLYDIR) ?: [] as $folder) {
         $name = basename($folder);
-        if (talktoyourblog_plugin_editor_is_allowed_folder_name($name)) {
+        if (tyb_plugin_editor_is_allowed_folder_name($name)) {
             $folders[] = $name;
         }
     }
@@ -196,17 +196,17 @@ function talktoyourblog_plugin_editor_list_plugin_folders() {
 }
 
 /** Lists every allowed-extension file (text or image) inside this plugin's own "ai-*" folders. */
-function talktoyourblog_plugin_editor_list_files() {
-    $plugins_dir = talktoyourblog_plugin_editor_plugins_dir();
+function tyb_plugin_editor_list_files() {
+    $plugins_dir = tyb_plugin_editor_plugins_dir();
     if (!$plugins_dir) {
-        return new WP_Error('talktoyourblog_plugin_editor_no_plugins_dir', __('The plugins directory could not be found.', 'talktoyourblog-plugin-editor'));
+        return new WP_Error('tyb_plugin_editor_no_plugins_dir', __('The plugins directory could not be found.', 'tyb-plugin-editor'));
     }
 
-    $all_extensions = array_merge(TALKTOYOURBLOG_PLUGIN_EDITOR_ALLOWED_EXTENSIONS, TALKTOYOURBLOG_PLUGIN_EDITOR_ALLOWED_IMAGE_EXTENSIONS);
+    $all_extensions = array_merge(TYB_PLUGIN_EDITOR_ALLOWED_EXTENSIONS, TYB_PLUGIN_EDITOR_ALLOWED_IMAGE_EXTENSIONS);
     $files = [];
 
-    foreach (glob($plugins_dir . '/' . TALKTOYOURBLOG_PLUGIN_EDITOR_FOLDER_PREFIX . '*', GLOB_ONLYDIR) ?: [] as $folder) {
-        if (!talktoyourblog_plugin_editor_is_allowed_folder_name(basename($folder))) {
+    foreach (glob($plugins_dir . '/' . TYB_PLUGIN_EDITOR_FOLDER_PREFIX . '*', GLOB_ONLYDIR) ?: [] as $folder) {
+        if (!tyb_plugin_editor_is_allowed_folder_name(basename($folder))) {
             continue; // Defensive; the glob pattern already enforces the prefix.
         }
 
@@ -223,7 +223,7 @@ function talktoyourblog_plugin_editor_list_files() {
                 continue;
             }
             $files[] = [
-                'path' => talktoyourblog_plugin_editor_relative_path($file->getPathname()),
+                'path' => tyb_plugin_editor_relative_path($file->getPathname()),
                 'size_bytes' => $file->getSize(),
                 'modified_at' => gmdate('c', $file->getMTime()),
             ];
@@ -242,35 +242,35 @@ function talktoyourblog_plugin_editor_list_files() {
  *
  * @return array{path:string, url:string, size_bytes:int}|WP_Error
  */
-function talktoyourblog_plugin_editor_save_image($relative_path, $content_base64) {
-    $resolved = talktoyourblog_plugin_editor_resolve_path($relative_path, false, TALKTOYOURBLOG_PLUGIN_EDITOR_ALLOWED_IMAGE_EXTENSIONS);
+function tyb_plugin_editor_save_image($relative_path, $content_base64) {
+    $resolved = tyb_plugin_editor_resolve_path($relative_path, false, TYB_PLUGIN_EDITOR_ALLOWED_IMAGE_EXTENSIONS);
     if (is_wp_error($resolved)) {
         return $resolved;
     }
 
     if (!is_string($content_base64) || $content_base64 === '') {
-        return new WP_Error('talktoyourblog_plugin_editor_invalid_image', __('Image content is required.', 'talktoyourblog-plugin-editor'));
+        return new WP_Error('tyb_plugin_editor_invalid_image', __('Image content is required.', 'tyb-plugin-editor'));
     }
 
     $binary = base64_decode($content_base64, true);
     if ($binary === false) {
-        return new WP_Error('talktoyourblog_plugin_editor_invalid_image', __('Image content is not valid base64.', 'talktoyourblog-plugin-editor'));
+        return new WP_Error('tyb_plugin_editor_invalid_image', __('Image content is not valid base64.', 'tyb-plugin-editor'));
     }
 
-    if (strlen($binary) > TALKTOYOURBLOG_PLUGIN_EDITOR_MAX_IMAGE_BYTES) {
+    if (strlen($binary) > TYB_PLUGIN_EDITOR_MAX_IMAGE_BYTES) {
         return new WP_Error(
-            'talktoyourblog_plugin_editor_image_too_large',
+            'tyb_plugin_editor_image_too_large',
             sprintf(
                 /* translators: %d: maximum size in megabytes */
-                __('Images must be %d MB or smaller.', 'talktoyourblog-plugin-editor'),
-                TALKTOYOURBLOG_PLUGIN_EDITOR_MAX_IMAGE_BYTES / 1024 / 1024
+                __('Images must be %d MB or smaller.', 'tyb-plugin-editor'),
+                TYB_PLUGIN_EDITOR_MAX_IMAGE_BYTES / 1024 / 1024
             )
         );
     }
 
     $info = @getimagesizefromstring($binary);
     if ($info === false) {
-        return new WP_Error('talktoyourblog_plugin_editor_invalid_image', __('That does not look like a real image file.', 'talktoyourblog-plugin-editor'));
+        return new WP_Error('tyb_plugin_editor_invalid_image', __('That does not look like a real image file.', 'tyb-plugin-editor'));
     }
 
     $extension = strtolower(pathinfo($resolved, PATHINFO_EXTENSION));
@@ -283,20 +283,20 @@ function talktoyourblog_plugin_editor_save_image($relative_path, $content_base64
     ];
     if (($expected_mimes[$extension] ?? null) !== $info['mime']) {
         return new WP_Error(
-            'talktoyourblog_plugin_editor_image_mismatch',
-            __("The file's actual content does not match its extension.", 'talktoyourblog-plugin-editor')
+            'tyb_plugin_editor_image_mismatch',
+            __("The file's actual content does not match its extension.", 'tyb-plugin-editor')
         );
     }
 
     if (file_put_contents($resolved, $binary) === false) {
-        return new WP_Error('talktoyourblog_plugin_editor_write_failed', __('The image could not be written (check folder permissions).', 'talktoyourblog-plugin-editor'));
+        return new WP_Error('tyb_plugin_editor_write_failed', __('The image could not be written (check folder permissions).', 'tyb-plugin-editor'));
     }
 
-    $relative = talktoyourblog_plugin_editor_relative_path($resolved);
+    $relative = tyb_plugin_editor_relative_path($resolved);
 
     return [
         'path' => $relative,
-        'url' => talktoyourblog_plugin_editor_plugins_dir_url() . '/' . $relative,
+        'url' => tyb_plugin_editor_plugins_dir_url() . '/' . $relative,
         'size_bytes' => strlen($binary),
     ];
 }

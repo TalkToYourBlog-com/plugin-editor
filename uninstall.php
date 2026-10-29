@@ -6,7 +6,7 @@
 defined('WP_UNINSTALL_PLUGIN') || exit;
 
 $revisions = get_posts([
-    'post_type' => 'talktoyourblog_plugin_revision',
+    'post_type' => 'tyb_plugin_revision',
     'post_status' => 'private',
     'posts_per_page' => -1,
     'fields' => 'ids',

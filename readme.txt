@@ -4,7 +4,7 @@ Tags: abilities api, mcp, ai, plugin editor, developer tools
 Requires at least: 6.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 0.2.0
+Stable tag: 0.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,7 +64,7 @@ The edit is refused before it touches the file if the new content fails a syntax
 
 = Where is the history kept, and does it ever get deleted automatically? =
 
-As a private WordPress post type (`talktoyourblog_plugin_revision`), the same mechanism core uses for post revisions -- not a separate file store. Nothing is pruned automatically in this version. Deleting this plugin (not just deactivating it) removes all of it; it does not remove the `ai-*` plugins themselves.
+As a private WordPress post type (`tyb_plugin_revision`), the same mechanism core uses for post revisions -- not a separate file store. Nothing is pruned automatically in this version. Deleting this plugin (not just deactivating it) removes all of it; it does not remove the `ai-*` plugins themselves.
 
 == External services ==
 
@@ -79,6 +79,10 @@ No data about the site or its users is sent anywhere by this plugin. Revisions s
 The full, human-readable source of this plugin is public: https://github.com/TalkToYourBlog-com/plugin-editor.
 
 == Changelog ==
+
+= 0.3.0 =
+* Fixed a bug that made every edit of an existing file fail: the revision history's own post type name was 31 characters, past WordPress's 20-character limit, so every snapshot attempt failed with a database error under strict SQL mode. Shortened to `tyb_plugin_revision`.
+* Shortened the plugin's internal prefix throughout (folder, main file, function and constant names, text domain, ability ids, CSS classes) from "talktoyourblog" to "tyb" for consistency and to avoid this class of length limit elsewhere. Nothing user-facing changes; the plugin's name and description stay the same.
 
 = 0.2.0 =
 * Added a built-in error log (TalkToYourBlog Plugin Editor in the admin menu), modelled on Anonymous Sales Plugin's: off by default, logs every ability call's success or failure with its path and, on failure, the error -- never file or image content. Includes a live viewer with level/search filtering, select, copy and clear.
