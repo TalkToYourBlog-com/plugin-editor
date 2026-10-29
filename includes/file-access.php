@@ -132,6 +132,17 @@ function tyb_plugin_editor_file_hash($absolute_path) {
 }
 
 /**
+ * Turns a folder slug (e.g. "ai-my-widget") into a human-readable plugin name ("AI My Widget")
+ * for the Plugin Name header -- WordPress happily displays the slug as-is, but hyphens look
+ * wrong in a title shown throughout wp-admin.
+ */
+function tyb_plugin_editor_display_name_from_slug($slug) {
+    $words = array_filter(preg_split('/[-_\s]+/', trim($slug)), 'strlen');
+    $words = array_map(fn ($word) => strtolower($word) === 'ai' ? 'AI' : ucfirst($word), $words);
+    return implode(' ', $words) ?: $slug;
+}
+
+/**
  * The seed files for a brand new plugin: real, minimal, working code -- not just an empty
  * folder. $slug is the folder/plugin name (e.g. "ai-my-widget"); $fn_prefix is the same string
  * with hyphens turned to underscores, safe to use in PHP identifiers.
@@ -139,11 +150,14 @@ function tyb_plugin_editor_file_hash($absolute_path) {
  * @return array<string, string> relative path (inside the plugin) => file content
  */
 function tyb_plugin_editor_starter_plugin_files($slug, $fn_prefix) {
+    $display_name = tyb_plugin_editor_display_name_from_slug($slug);
+
     return [
         "{$slug}.php" => <<<PHP
 <?php
 /*
-Plugin Name: {$slug}
+Plugin Name: {$display_name}
+Description: Independent WordPress plugin created by an AI app through TalkToYourBlog (talktoyourblog.com).
 Version: 1.0.0
 */
 
