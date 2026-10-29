@@ -4,7 +4,7 @@ Tags: abilities api, mcp, ai, plugin editor, developer tools
 Requires at least: 6.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 0.4.0
+Stable tag: 0.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,9 @@ No data about the site or its users is sent anywhere by this plugin. Revisions s
 The full, human-readable source of this plugin is public: https://github.com/TalkToYourBlog-com/plugin-editor.
 
 == Changelog ==
+
+= 0.4.1 =
+* Fixed restore-revision failing to undo a delete-file call ("That file does not exist"): it now re-creates a missing file instead of requiring the file to already exist.
 
 = 0.4.0 =
 * create-plugin now seeds a minimal but complete plugin skeleton (main file with a valid plugin header, includes/hooks.php, uninstall.php), not just an empty folder.
